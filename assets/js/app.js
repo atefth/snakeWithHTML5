@@ -12,12 +12,12 @@ var context = canvas.getContext("2d");
 
 //Grid Object
 var grid = {
-	_grid: null,
-	cols: null,
-	rows: null,
-	value: null,
+	_grid: [[]],
+	cols: 5,
+	rows: 5,
 	init: function (cols, rows, value) {
-		this._grid = [[]];
+		this.cols = cols;
+		this.rows = rows;
 		for (var i = 0; i < ROWS; i++) {
 			this._grid[i] = [];
 			for (var j = 0; j < ROWS; j++) {
@@ -33,6 +33,11 @@ var grid = {
 	},
 	get: function (x, y) {
 		return this._grid[x][y];
+	},
+	clear: function (x, y) {
+		console.log("clearing : ["+x+", "+y+"]");
+		this._grid[x][y][0] = EMPTY;
+		this._grid[x][y][1] = 0;
 	}
 }
 
@@ -40,19 +45,21 @@ var grid = {
 var head = {
 	x: null,
 	y: null,
-	init: function (x, y) {
+	init: function (x, y, dir) {
 		this.x = x;
 		this.y = y;
+		grid.set(x, y, SNAKE, dir);
 	},
-	getX: function () {
-		return this.x;
+	get: function () {
+		return grid.get(this.x, this.y);
 	},
-	getY: function () {
-		return this.y;
-	},
-	set: function (x, y) {
+	set: function (x, y, dir) {
 		this.x = x;
 		this.y = y;
+		grid.set(x, y, SNAKE, dir);
+	},
+	set: function (direction) {
+		this.direction = direction;
 	}
 }
 
@@ -60,32 +67,116 @@ var head = {
 var tail = {
 	x: null,
 	y: null,
-	init: function (x, y) {
+	init: function (x, y, dir) {
 		this.x = x;
 		this.y = y;
+		grid.set(x, y, SNAKE, dir);
 	},
-	getX: function () {
-		return this.x;
+	get: function () {
+		return grid.get(this.x, this.y);
 	},
-	getY: function () {
-		return this.y;
-	},
-	set: function (x, y) {
+	set: function (x, y, dir) {
 		this.x = x;
 		this.y = y;
+		grid.set(x, y, SNAKE, dir);
 	}
 }
 
-function init (cols, rows, value) {
+//Reference to the Next position
+var next = {
+	x: null,
+	y: null,
+	init: function (x, y, dir) {
+		this.x = x;
+		this.y = y;
+		grid.set(x, y, EMPTY, dir);
+	},
+	get: function () {
+		return grid.get(this.x, this.y);
+	},
+	set: function (x, y, dir) {
+		this.x = x;
+		this.y = y;
+		grid.set(x, y, EMPTY, dir);
+	}
+}
+
+//Snake Object
+var snake = {
+	size: 0,
+	direction: 0,
+	init: function (size, direction) {
+		this.size = size;
+		this.direction = direction;
+	},
+	move: function () {		
+		if (this.size == 1) {
+			head.x = next.x;
+			head.y = next.y;
+			head.direction = next.direction;
+			this.updateNext();
+			grid.clear(tail.x, tail.y);
+			tail.set(head.x, head.y, head.direction);
+		}else{
+
+		}
+	},
+	change: function (direction) {
+		this.direction = direction;
+		this.updateNext();
+	},
+	grow: function () {
+		
+	},
+	updateNext: function () {		
+		var x = head.x;		
+		var y = head.y;
+		switch(this.direction){
+			case UP:
+				y--;
+				break;
+			case DOWN:
+				y++;
+				break;
+			case LEFT:
+				x--;
+				break;
+			case RIGHT:
+				x++;
+				break;
+		}
+		if (x < 0) {
+			x = grid.cols - 1;
+		}else if(x >= grid.cols){
+			x = 0;
+		}
+		if (y < 0) {
+			y = grid.rows - 1;
+		}else if(y >= grid.rows){
+			y = 0;
+		}
+		next.x = x;
+		next.y = y;
+		next.direction = this.direction;
+	}
+}
+
+function init (cols, rows, value, direction) {
 	grid.init(cols, rows, value);
-	DIRECTION = DOWN;
-	head.init(2,7);
-	tail.init(2,7);
-	grid.set(2,7,SNAKE, DIRECTION);
+	DIRECTION = direction;
+	head.init(2, 7, DIRECTION);
+	tail.init(2, 7, DIRECTION);
+	next.init(2, 6, DIRECTION);
+	snake.init(1, DIRECTION);
 	window.addEventListener("keydown", listener);
 	setInterval(function () {
 		loop();
-	}, 500);
+	}, 200);
+}
+
+function loop () {
+	draw();
+	snake.move();
 }
 
 function listener (event) {
@@ -93,38 +184,24 @@ function listener (event) {
 	switch(key){
 		case UP:
 			DIRECTION = UP;
+			snake.change(DIRECTION);			
 			break;
 		case DOWN:
 			DIRECTION = DOWN;
+			snake.change(DIRECTION);
 			break;
 		case LEFT:
 			DIRECTION = LEFT;
+			snake.change(DIRECTION);
 			break;
 		case RIGHT:
 			DIRECTION = RIGHT;
+			snake.change(DIRECTION);
 			break;
 	}
 }
 
-function loop () {
-	switch(DIRECTION){
-		case UP:
-			moveUp();
-			break;
-		case DOWN:
-			moveDown();
-			break;
-		case LEFT:
-			moveLeft();
-			break;
-		case RIGHT:
-			moveRight();
-			break;
-	}
-	draw();
-}
-
-init(COLS, ROWS, EMPTY);
+init(COLS, ROWS, EMPTY, UP);
 
 function draw () {
 	for (var i = 0; i < ROWS; i++) {
@@ -137,175 +214,10 @@ function draw () {
 				this.context.fillStyle = "#ABA";
 				this.context.fillRect((i * WIDTH)+(i * MARGIN),(j * HEIGHT)+(j * MARGIN), HEIGHT, WIDTH);
 			}
+			if (grid.get(i, j)[0] == FOOD) {
+				this.context.fillStyle = "#111";
+				this.context.fillRect((i * WIDTH)+(i * MARGIN),(j * HEIGHT)+(j * MARGIN), HEIGHT, WIDTH);
+			}
 		}
-	}
-}
-
-function wrapUp (node) {
-	if (node.getY() - 1 < 0) {
-		return true;
-	}else{
-		return false;
-	}
-}
-
-function wrapDown (node) {
-	if (node.getY() + 1 >= ROWS) {
-		return true;
-	}else{
-		return false;
-	}
-}
-
-function wrapLeft (node) {
-	if (node.getX() - 1 < 0) {
-		return true;
-	}else{
-		return false;
-	}
-}
-
-function wrapRight (node) {
-	if (node.getX() + 1 >= COLS) {
-		return true;
-	}else{
-		return false;
-	}
-}
-
-function shift (node) {
-	switch(node[1]){
-			case UP:
-				if (wrapUp(tail)) {
-					tail.set(tail.getX(), ROWS - 1);
-				}else{
-					tail.set(tail.getX(), tail.getY() - 1);
-				}
-				node[0] = EMPTY;
-				node[1] = 0;
-				break;
-			case DOWN:
-				if (wrapDown(tail)) {
-					tail.set(tail.getX(), 0);
-				}else{
-					tail.set(tail.getX(), tail.getY() + 1);
-				}
-				node[0] = EMPTY;
-				node[1] = 0;
-				break;
-			case LEFT:
-				if (wrapLeft(tail)) {
-					tail.set(COLS - 1, tail.getY());
-				}else{
-					tail.set(tail.getX() - 1, tail.getY());
-				}
-				node[0] = EMPTY;
-				node[1] = 0;
-				break;
-			case LEFT:
-				if (wrapRight(tail)) {
-					tail.set(0, tail.getY());
-				}else{
-					tail.set(tail.getX() + 1, tail.getY());
-				}
-				node[0] = EMPTY;
-				node[1] = 0;
-				break;
-		}
-}
-
-function moveUp () {
-	var nextPos;
-	var x = head.getX();
-	var y;
-	if (wrapUp(head)) {
-		y = ROWS - 1;
-		nextPos = grid.get(x, y);
-	}else{
-		y = head.getY() - 1;
-		nextPos = grid.get(x, y);
-	}
-	if (nextPos[0] == FOOD) {
-
-	}else if(nextPos[0] == SNAKE){
-
-	}else{
-		nextPos[0] = SNAKE;
-		nextPos[1] = UP;
-		head.set(x, y);
-		var lastPos = grid.get(tail.getX(), tail.getY());
-		shift(lastPos);
-	}
-}
-
-function moveDown () {
-	var nextPos;
-	var x = head.getX();
-	var y;
-	if (wrapDown(head)) {
-		y = 0;
-		nextPos = grid.get(x, y);
-	}else{
-		y = head.getY() + 1;
-		nextPos = grid.get(x, y);
-	}
-	if (nextPos[0] == FOOD) {
-
-	}else if(nextPos[0] == SNAKE){
-
-	}else{
-		nextPos[0] = SNAKE;
-		nextPos[1] = DOWN;
-		head.set(x, y);
-		var lastPos = grid.get(tail.getX(), tail.getY());
-		shift(lastPos);
-	}
-}
-
-function moveLeft () {
-	var nextPos;
-	var x;
-	var y = head.getY();
-	if (wrapLeft(head)) {
-		x = COLS - 1;
-		nextPos = grid.get(x, y);
-	}else{
-		x = head.getX() - 1;
-		nextPos = grid.get(x, y);
-	}
-	if (nextPos[0] == FOOD) {
-
-	}else if(nextPos[0] == SNAKE){
-
-	}else{
-		nextPos[0] = SNAKE;
-		nextPos[1] = LEFT;
-		head.set(x, y);
-		var lastPos = grid.get(tail.getX(), tail.getY());
-		shift(lastPos);
-	}
-}
-
-function moveRight () {
-	var nextPos;
-	var x;
-	var y = head.getY();
-	if (wrapRight(head)) {
-		x = 0;
-		nextPos = grid.get(x, y);
-	}else{
-		x = head.getX() + 1;
-		nextPos = grid.get(x, y);
-	}
-	if (nextPos[0] == FOOD) {
-
-	}else if(nextPos[0] == SNAKE){
-
-	}else{
-		nextPos[0] = SNAKE;
-		nextPos[1] = RIGHT;
-		head.set(x, y);
-		var lastPos = grid.get(tail.getX(), tail.getY());
-		shift(lastPos);
 	}
 }
