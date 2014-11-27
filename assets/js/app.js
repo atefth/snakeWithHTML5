@@ -1,4 +1,4 @@
-var COLS = 10, ROWS = 10;
+var COLS = 15, ROWS = 15;
 var HEIGHT = 40, WIDTH = 40;
 var MARGIN = 5, PADDING = 5;
 
@@ -271,13 +271,15 @@ function draw () {
 		for (var j = 0; j < COLS; j++) {
 			if (grid.get(i, j)[0] == EMPTY) {
 				this.context.fillStyle = "#666";
-				this.context.fillRect((i * WIDTH)+(i * MARGIN),(j * HEIGHT)+(j * MARGIN), HEIGHT, WIDTH);
+				this.context.fillRect((i * WIDTH)+(i * MARGIN),(j * HEIGHT)+(j * MARGIN), WIDTH, HEIGHT);
 			}else if (grid.get(i, j)[0] == SNAKE) {
-				this.context.fillStyle = "#ABA";
-				this.context.fillRect((i * WIDTH)+(i * MARGIN),(j * HEIGHT)+(j * MARGIN), HEIGHT, WIDTH);
+				this.context.fillStyle = "#122E12";
+				this.context.fillRect((i * WIDTH)+(i * MARGIN),(j * HEIGHT)+(j * MARGIN), WIDTH, HEIGHT);
+				// this.context.fillStyle = "#071207";
+				// this.context.fillRect((i * WIDTH)+(i * MARGIN),(j * HEIGHT)+(j * MARGIN), WIDTH/4, HEIGHT);
 			}else if (grid.get(i, j)[0] == FOOD) {
-				this.context.fillStyle = "#111";
-				this.context.fillRect((i * WIDTH)+(i * MARGIN),(j * HEIGHT)+(j * MARGIN), HEIGHT, WIDTH);
+				this.context.fillStyle = "#5CE65C";
+				this.context.fillRect((i * WIDTH)+(i * MARGIN),(j * HEIGHT)+(j * MARGIN), WIDTH, HEIGHT);
 			}
 		}
 	}
